@@ -1,0 +1,76 @@
+{
+    "name": "iniznet/mahout-devtools",
+    "description": "Developer-time tooling for the mahout family: self-generated WordPress stubs, shared analyzer configuration, the test bootstrap and the doctor command.",
+    "type": "library",
+    "license": "GPL-2.0-or-later",
+    "keywords": [
+        "wordpress",
+        "mahout",
+        "tooling",
+        "phpstan",
+        "stubs"
+    ],
+    "require": {
+        "php": ">=8.4",
+        "friendsofphp/php-cs-fixer": "^3.64",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^9.6",
+        "rector/rector": "^2.0",
+        "vimeo/psalm": "^6.0",
+        "yoast/phpunit-polyfills": "^1.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Iniznet\\Mahout\\Devtools\\": "src/",
+            "Iniznet\\Mahout\\Devtools\\Rules\\": "rules/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Iniznet\\Mahout\\Devtools\\Tests\\": "tests/"
+        }
+    },
+    "bin": [
+        "bin/mahout-devtools"
+    ],
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true,
+        "allow-plugins": {}
+    },
+    "scripts": {
+        "format": "php-cs-fixer fix",
+        "format:check": "php-cs-fixer fix --dry-run --diff",
+        "stan": "phpstan analyse -c phpstan-types.neon --no-progress --memory-limit=2G",
+        "psalm": "psalm --taint-analysis --no-cache",
+        "arch": "php bin/mahout-devtools arch",
+        "rector": "rector --dry-run --no-progress-bar",
+        "test": "php bin/mahout-devtools test",
+        "hooks:check": "php bin/mahout-devtools hooks:check --source=fixtures/hooks/source --output=fixtures/hooks/hooks.md",
+        "hooks:generate": "php bin/mahout-devtools hooks:generate --source=fixtures/hooks/source --output=fixtures/hooks/hooks.md",
+        "i18n:check": "php bin/mahout-devtools i18n:check --domain=howdah --source=fixtures/i18n/source --output=fixtures/i18n/howdah.pot",
+        "i18n:generate": "php bin/mahout-devtools i18n:generate --domain=howdah --source=fixtures/i18n/source --output=fixtures/i18n/howdah.pot",
+        "doctor": "php bin/mahout-devtools doctor",
+        "config:check": "php bin/mahout-devtools config:check",
+        "stubs:generate": "php bin/mahout-devtools stubs:generate",
+        "stubs:check": "php bin/mahout-devtools stubs:check",
+        "check": [
+            "@format:check",
+            "@stan",
+            "@psalm",
+            "@arch",
+            "@rector",
+            "@test",
+            "@hooks:check",
+            "@i18n:check",
+            "@doctor",
+            "@config:check",
+            "@stubs:check"
+        ]
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.0.x-dev"
+        }
+    }
+}

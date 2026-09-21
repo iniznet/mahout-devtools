@@ -1,0 +1,72 @@
+# Copyright (C) Iniznet
+# This file is distributed under the GPL-2.0-or-later license.
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"X-Domain: howdah\n"
+
+#: fixtures/i18n/source/Translations.php:20
+msgid "%s chapter"
+msgid_plural "%s chapters"
+msgstr[0] ""
+msgstr[1] ""
+
+#: fixtures/i18n/source/Translations.php:28
+msgid "%s page"
+msgid_plural "%s pages"
+msgstr[0] ""
+msgstr[1] ""
+
+#: fixtures/i18n/source/Translations.php:16
+msgid "Echoed string"
+msgstr ""
+
+#: fixtures/i18n/source/Translations.php:40
+msgid "Label attribute"
+msgstr ""
+
+#. translators: %s: series title.
+#: fixtures/i18n/source/Translations.php:36
+msgid "Open %s"
+msgstr ""
+
+#: fixtures/i18n/source/Translations.php:15
+msgid "Plain string"
+msgstr ""
+
+#. translators: %s: series title.
+#: fixtures/i18n/source/Translations.php:34
+msgid "Read %s"
+msgstr ""
+
+#: fixtures/i18n/source/Translations.php:39
+msgid "Title attribute"
+msgstr ""
+
+#: fixtures/i18n/source/Translations.php:29
+msgctxt "collection"
+msgid "%s file"
+msgid_plural "%s files"
+msgstr[0] ""
+msgstr[1] ""
+
+#: fixtures/i18n/source/Translations.php:26
+msgctxt "imperative"
+msgid "Read"
+msgstr ""
+
+#: fixtures/i18n/source/Translations.php:25
+msgctxt "noun"
+msgid "%s story"
+msgid_plural "%s stories"
+msgstr[0] ""
+msgstr[1] ""
+
+#: fixtures/i18n/source/Translations.php:24
+msgctxt "verb"
+msgid "Post"
+msgstr ""
+

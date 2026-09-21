@@ -1,0 +1,8 @@
+{
+    "name": "iniznet/mahout-fixture-consumer",
+    "description": "A fixture consumer for the divergence gate.",
+    "license": "GPL-2.0-or-later",
+    "require-dev": {
+        "iniznet/mahout-devtools": "^1.0"
+    }
+}

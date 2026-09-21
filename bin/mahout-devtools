@@ -1,0 +1,25 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * mahout-devtools entry point.
+ *
+ * This file is a boundary, not analysed source: it reads the process argument
+ * vector and composes the application. When installed as a dependency, composer
+ * has already loaded the autoloader before including this file.
+ */
+
+declare(strict_types=1);
+
+$autoload = __DIR__ . '/../vendor/autoload.php';
+if (is_file($autoload)) {
+	require $autoload;
+}
+
+$application = new Iniznet\Mahout\Devtools\Console\Application(
+	Iniznet\Mahout\Devtools\Console\Paths::fromEnvironment(),
+	new Iniznet\Mahout\Devtools\Console\ProcessRunner(),
+);
+
+$arguments = array_slice($argv, 1);
+exit($application->run($arguments));

@@ -1,0 +1,9 @@
+{
+    "packages": [],
+    "packages-dev": [
+        {
+            "name": "iniznet/mahout-devtools",
+            "version": "1.0.0"
+        }
+    ]
+}

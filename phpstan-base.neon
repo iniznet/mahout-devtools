@@ -1,0 +1,6 @@
+parameters:
+	level: max
+	bootstrapFiles:
+		- stubs/wordpress-stubs.php
+	treatPhpDocTypesAsCertain: true
+	reportUnmatchedIgnoredErrors: true
