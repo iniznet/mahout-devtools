@@ -13,8 +13,10 @@ use PHPStan\Analyser\Scope;
 use PHPStan\Rules\RuleError;
 
 /**
- * A capability is a typed constant on a Capabilities class; a string literal at
- * the check site is a typo that silently denies or grants.
+ * A capability is a typed constant on a Capabilities type, and the check site
+ * names the constant. A string literal at the check site is a typo that
+ * silently denies or grants, and a class merely *called* Capabilities is not a
+ * declaration of anything.
  *
  * @implements ArchitectureRule<Node>
  */
@@ -38,14 +40,10 @@ final class CapabilityLiteralOnlyInCapabilitiesRule implements ArchitectureRule
             return [];
         }
 
-        if ($scope->isInClass() && Violation::shortName($scope->getClassReflection()->getName()) === 'Capabilities') {
-            return [];
-        }
-
         return [Violation::at(
             $node,
             self::IDENTIFIER,
-            'Capability literal at current_user_can() is banned; declare it on a Capabilities class.',
+            'A capability at current_user_can() is a typed constant on a Capabilities type, never a literal at the check site.',
         )];
     }
 }
