@@ -36,6 +36,18 @@ final class HooksReferenceTest extends TestCase
         self::assertStringNotContainsString('mahout/kernel/internal', $this->reference()->generate());
     }
 
+    public function testAPublicConstantOutsideAHooksClassIsNotListed(): void
+    {
+        self::assertStringNotContainsString('fixture/search_index', $this->reference()->generate());
+    }
+
+    public function testAPublicConstantOutsideAHooksClassNeedsNoHookTags(): void
+    {
+        $this->expectNotToPerformAssertions();
+
+        $this->reference()->generate();
+    }
+
     public function testGenerationIsDeterministic(): void
     {
         self::assertSame($this->reference()->generate(), $this->reference()->generate());

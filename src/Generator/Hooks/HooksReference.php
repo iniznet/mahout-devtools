@@ -10,7 +10,10 @@ use Iniznet\Mahout\Devtools\Generator\GeneratedReference;
 use Iniznet\Mahout\Devtools\Generator\SourceFiles;
 
 /**
- * Renders the hook reference from every public hook constant in the source.
+ * Renders the hook reference from every public constant declared on a Hooks
+ * class. Every hook name is a public const on a Hooks class by contract, so
+ * constants elsewhere — an index name, a cache group — are not hooks and are
+ * not listed.
  *
  * The scan is token-based, not reflection-based: a consumer's Hooks class need
  * not be loaded, and a constant whose docblock omits @action or @filter fails
@@ -138,6 +141,10 @@ final readonly class HooksReference implements GeneratedReference
                 continue;
             }
 
+            if (!$this->isHookClass($class)) {
+                continue;
+            }
+
             if ('' === $documentation['type']) {
                 throw InvalidHookDeclaration::missingType($class, $constant, $file);
             }
@@ -217,6 +224,13 @@ final readonly class HooksReference implements GeneratedReference
         }
 
         return 'public';
+    }
+
+    private function isHookClass(string $class): bool
+    {
+        $separator = strrpos($class, '\\');
+
+        return 'Hooks' === (false === $separator ? $class : substr($class, $separator + 1));
     }
 
     /**
