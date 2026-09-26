@@ -35,3 +35,24 @@ runtime. Nothing in this tool's `require` is loaded on a request path.
 
 The toolchain version pins now have exactly one home. Changing a tool version is one edit in one
 repository, not seven.
+
+## The measured state of the PHPUnit pin
+
+Recorded 2026-07-09, while reviewing whether to move the family to PHPUnit 11.
+
+PHPUnit 9.6 is end-of-life upstream, which is a reason to consider the move. It is not a cost, and the
+usual forcing function is absent: the two heaviest suites in the family run clean on PHP 8.4.20 with no
+deprecation output whatsoever — 127 tests in the theme, whose integration suite drives a live WordPress
+7.1.2 test harness, and 265 in `mahout-fields`.
+
+The blocker is not ours either. WordPress core's own test suite pins `yoast/phpunit-polyfills` at
+`^1.1`, and the polyfills series maps onto PHPUnit support: 1.x covers PHPUnit 4.8–9.x, 3.x covers
+6.4–11.x. Core's bootstrap enforces only a *minimum*, so the family could run polyfills 3.x with
+PHPUnit 11 today — but it would be running core's `WP_UnitTestCase` on a combination core does not test
+itself. Driving a dependency beyond its tested surface, because a version guard happens to permit it,
+is the degraded-mode failure law 3 refuses.
+
+The pin therefore stays deliberately, and the move is a WordPress-core event rather than a family one.
+When core raises its polyfills constraint, the change is this file, the `phpunit.xml.dist` schema in each
+consumer, and `static` data providers in the suites. The version itself keeps exactly one home, which is
+the whole point of this decision.
