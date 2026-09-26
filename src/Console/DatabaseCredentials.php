@@ -13,12 +13,19 @@ namespace Iniznet\Mahout\Devtools\Console;
  */
 final readonly class DatabaseCredentials
 {
+    /**
+     * @param string|null $tablePrefix the declared `$table_prefix`, or null when the file
+     *                                 omits it: a diagnostic that assumed WordPress's own
+     *                                 default would read a table that may not be the site's,
+     *                                 and report success about a database it did not look at
+     */
     public function __construct(
         public string $name,
         public string $host,
         public int $port,
         public string $user,
         public string $password,
+        public ?string $tablePrefix = null,
     ) {
     }
 
@@ -61,12 +68,21 @@ final readonly class DatabaseCredentials
             }
         }
 
+        // `$table_prefix` is a variable assignment rather than a define, so it needs
+        // its own read. An absent prefix is reported as absent rather than defaulted:
+        // a caller that assumed core's own default would read tables that may not be
+        // the site's and report success about a database it never looked at.
+        $prefix = 1 === preg_match('/^[\\s]*\\$table_prefix[\\s]*=[\\s]*[\\x27"]([^\\x27"]+)[\\x27"]/m', $source, $variable)
+            ? $variable[1]
+            : null;
+
         return new self(
             $name,
             '' === $host ? 'localhost' : $host,
             $port,
             '' === $define('DB_USER') ? 'root' : $define('DB_USER'),
             $define('DB_PASSWORD'),
+            $prefix,
         );
     }
 }
