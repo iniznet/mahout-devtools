@@ -143,6 +143,14 @@ composer config:check# divergence and the artifact set
 composer check       # all of the above, in order
 ```
 
+`doctor` is where an installation is judged rather than a repository. Its checks are
+the properties no per-repository gate can see from inside: the opcode cache and the
+autoloader mode, the preload file, the pool against this site's own statistics, and
+**one composition root per site** — `CompositionRootCheck` counts every
+`wp-content/{plugins,mu-plugins,themes}/*/vendor/iniznet/mahout-*` and fails above one,
+because two hosts silently share the schema-version option, the field tables and the
+hook namespace (mahout-kernel ADR-0007).
+
 `composer check` must pass before every commit, with no `--no-verify`. A gate
 that cannot run fails loudly; it never passes silently. The two generated
 references are refreshed with `composer hooks:generate` and

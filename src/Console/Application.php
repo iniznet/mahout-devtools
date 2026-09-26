@@ -7,6 +7,7 @@ namespace Iniznet\Mahout\Devtools\Console;
 use Iniznet\Mahout\Devtools\Doctor\Checks\AnalyzerDivergenceCheck;
 use Iniznet\Mahout\Devtools\Doctor\Checks\ArchitectureRuleCatalogCheck;
 use Iniznet\Mahout\Devtools\Doctor\Checks\AutoloaderCheck;
+use Iniznet\Mahout\Devtools\Doctor\Checks\CompositionRootCheck;
 use Iniznet\Mahout\Devtools\Doctor\Checks\GatesManifestCheck;
 use Iniznet\Mahout\Devtools\Doctor\Checks\InnoDBBufferPoolCheck;
 use Iniznet\Mahout\Devtools\Doctor\Checks\OpcacheCheck;
@@ -188,6 +189,7 @@ final readonly class Application
             ),
             new InnoDBBufferPoolCheck($this->paths->wordpressRoot),
             new WordPressVersionCheck($this->paths->wordpressRoot),
+            new CompositionRootCheck($this->paths->wordpressRoot),
             new AutoloaderCheck($root, $this->runner),
             new PreloadFileCheck($root, $this->runner, (string) ini_get('opcache.preload')),
             new RequiredFilesCheck($this->paths->root, 'Stub file', ['stubs/wordpress-stubs.php']),
