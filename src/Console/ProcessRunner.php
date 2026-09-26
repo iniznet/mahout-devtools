@@ -7,7 +7,8 @@ namespace Iniznet\Mahout\Devtools\Console;
 use Iniznet\Mahout\Devtools\Exception\CommandFailed;
 
 /**
- * Runs a child process with an extended environment and streams its output.
+ * Runs a child process with an extended environment, either streaming its output
+ * or capturing it when the caller needs the child's answer rather than its noise.
  */
 final class ProcessRunner
 {

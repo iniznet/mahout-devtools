@@ -138,7 +138,7 @@ composer rector      # Rector dry-run
 composer test        # PHPUnit
 composer hooks:check # generated hook reference is current
 composer i18n:check  # generated POT is current
-composer doctor      # installation assembly
+composer doctor      # installation assembly and the capacity prerequisites
 composer config:check# divergence and the artifact set
 composer check       # all of the above, in order
 ```

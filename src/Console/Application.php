@@ -8,9 +8,12 @@ use Iniznet\Mahout\Devtools\Doctor\Checks\AnalyzerDivergenceCheck;
 use Iniznet\Mahout\Devtools\Doctor\Checks\ArchitectureRuleCatalogCheck;
 use Iniznet\Mahout\Devtools\Doctor\Checks\AutoloaderCheck;
 use Iniznet\Mahout\Devtools\Doctor\Checks\GatesManifestCheck;
+use Iniznet\Mahout\Devtools\Doctor\Checks\InnoDBBufferPoolCheck;
+use Iniznet\Mahout\Devtools\Doctor\Checks\OpcacheCheck;
 use Iniznet\Mahout\Devtools\Doctor\Checks\PathRepositoryCheck;
 use Iniznet\Mahout\Devtools\Doctor\Checks\PhpExtensionCheck;
 use Iniznet\Mahout\Devtools\Doctor\Checks\PhpVersionCheck;
+use Iniznet\Mahout\Devtools\Doctor\Checks\PreloadFileCheck;
 use Iniznet\Mahout\Devtools\Doctor\Checks\RequiredFilesCheck;
 use Iniznet\Mahout\Devtools\Doctor\Checks\WordPressVersionCheck;
 use Iniznet\Mahout\Devtools\Doctor\Checks\WorkflowSafetyCheck;
@@ -24,6 +27,7 @@ use Iniznet\Mahout\Devtools\Generator\Hooks\HooksReference;
 use Iniznet\Mahout\Devtools\Generator\ReferenceGate;
 use Iniznet\Mahout\Devtools\Generator\SourceFiles;
 use Iniznet\Mahout\Devtools\Generator\Translations\TranslationsReference;
+use Iniznet\Mahout\Devtools\Probe\LoadProbe;
 
 /**
  * The mahout-devtools command line.
@@ -82,8 +86,9 @@ final readonly class Application
 
         try {
             return match ($command) {
-                'doctor' => $this->doctor(),
+                'doctor' => $this->doctor($options),
                 'config:check' => $this->configCheck($options),
+                'load:probe' => $this->loadProbe($options),
                 'stubs:generate' => $this->stubsGenerate(),
                 'stubs:check' => $this->stubsCheck(),
                 'test' => $this->test(),
@@ -102,13 +107,89 @@ final readonly class Application
         }
     }
 
-    private function doctor(): int
+    /**
+     * The opcache directives as this SAPI reads them. Read once, at the
+     * composition root, so a check never reaches for a global itself.
+     *
+     * @return array<string, string|false>
+     */
+    private static function opcacheSettings(): array
     {
+        $settings = [];
+
+        foreach (['opcache.enable', 'opcache.validate_timestamps', 'opcache.max_accelerated_files', 'opcache.memory_consumption', 'opcache.preload', 'realpath_cache_size'] as $directive) {
+            $settings[$directive] = ini_get($directive);
+        }
+
+        return $settings;
+    }
+
+    /**
+     * @param array<string, string> $options
+     */
+    private function loadProbe(array $options): int
+    {
+        if (!extension_loaded('curl')) {
+            // A CLI tool reporting a missing optional extension is a usage error, not a
+            // program invariants violation: it exits 2 without constructing an
+            // exception type the architecture rules would (correctly) reject.
+            fwrite(STDERR, 'load:probe requires the curl extension'.PHP_EOL);
+
+            return 2;
+        }
+
+        $url = (string) ($options['url'] ?? '');
+
+        if ('' === $url) {
+            fwrite(STDERR, 'usage: mahout-devtools load:probe --url=<scheme://host/path> [--concurrency=8] [--requests=80]'.PHP_EOL);
+
+            return 2;
+        }
+
+        $concurrency = max(1, (int) ($options['concurrency'] ?? 8));
+        $requests = max(1, (int) ($options['requests'] ?? $concurrency * 10));
+
+        $summary = new LoadProbe($url, $concurrency, $requests)->run();
+
+        echo $summary->toLine().PHP_EOL;
+
+        // Absolute latency is never a failure here: a slower machine is not a broken
+        // theme, and a smoke job that fails for the wrong reason gets deleted.
+        if ($summary->completed < $requests) {
+            fwrite(STDERR, sprintf(
+                '%d of %d requests did not return a 2xx or 3xx status (%d failed, %d never reported)'.PHP_EOL,
+                $requests - $summary->completed,
+                $requests,
+                $summary->failed,
+                $requests - $summary->completed - $summary->failed,
+            ));
+
+            return 1;
+        }
+
+        return 0;
+    }
+
+    /**
+     * @param array<string, string> $options
+     */
+    private function doctor(array $options): int
+    {
+        $root = $options['root'] ?? $this->cwd();
+
         $checks = [
             new PhpVersionCheck(),
             new PhpExtensionCheck(['json', 'hash', 'mysqli']),
+            new OpcacheCheck(
+                $this->paths->wordpressRoot,
+                self::opcacheSettings(),
+                extension_loaded('Zend OPcache'),
+                EnvironmentType::fromConfigFile($this->paths->wordpressRoot.'/wp-config.php'),
+            ),
+            new InnoDBBufferPoolCheck($this->paths->wordpressRoot),
             new WordPressVersionCheck($this->paths->wordpressRoot),
-            new AutoloaderCheck($this->paths->root),
+            new AutoloaderCheck($root, $this->runner),
+            new PreloadFileCheck($root, $this->runner, (string) ini_get('opcache.preload')),
             new RequiredFilesCheck($this->paths->root, 'Stub file', ['stubs/wordpress-stubs.php']),
             new RequiredFilesCheck($this->paths->root, 'Analyzer configuration', self::ANALYZER_FILES),
             new RequiredFilesCheck($this->paths->root, 'Artifact set', self::ARTIFACTS),
@@ -312,6 +393,7 @@ final readonly class Application
     {
         echo 'mahout-devtools '.implode(' ', [
             'doctor',
+            'load:probe',
             'config:check',
             'stubs:generate',
             'stubs:check',
@@ -329,7 +411,7 @@ final readonly class Application
     private function unknown(string $command): int
     {
         fwrite(STDERR, sprintf('Unknown command: %s%s', '' === $command ? '(none)' : $command, PHP_EOL));
-        fwrite(STDERR, 'Usage: mahout-devtools {doctor|config:check|stubs:generate|stubs:check|test|arch|i18n:check|i18n:generate|hooks:check|hooks:generate}'.PHP_EOL);
+        fwrite(STDERR, 'Usage: mahout-devtools {doctor|load:probe|config:check|stubs:generate|stubs:check|test|arch|i18n:check|i18n:generate|hooks:check|hooks:generate}'.PHP_EOL);
 
         return 2;
     }

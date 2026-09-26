@@ -36,6 +36,7 @@ rules:
 	- 'Iniznet\Mahout\Devtools\Rules\DispatchArmDeclaresCacheabilityRule'
 	- 'Iniznet\Mahout\Devtools\Rules\NoNonceInSharedSurfaceRule'
 	- 'Iniznet\Mahout\Devtools\Rules\BoundedHowdahStatementRule'
+	- 'Iniznet\Mahout\Devtools\Rules\NoDisabledFoundRowsRule'
 	- 'Iniznet\Mahout\Devtools\Rules\NoCriticalDiagnosticsOnReadPathRule'
 services:
 	-

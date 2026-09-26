@@ -103,7 +103,32 @@ consequence of its lockfile. The package has four responsibilities:
   gate fails the build instead of surfacing in an audit. Run from the
   repository root.
 - **`doctor`** — `bin/mahout-devtools doctor` runs the installation checks and
-  exits non-zero on a failure.
+  exits non-zero on a failure. Besides the toolchain's own assembly it asserts the
+  declared capacity prerequisites, measuring rather than reciting: the PHP files this
+  installation can put on a request path against `opcache.max_accelerated_files`, the
+  buffer pool against the site's own table statistics, the installed classmap in a
+  child process, and `preload.php` as far as the platform allows. A prerequisite wrong
+  in every mode fails; the production-only ones are judged against the installation's
+  declared `WP_ENVIRONMENT_TYPE`, and one that declares nothing is told so; a
+  development box gets a warning with its remedy; a check that cannot apply to this
+  root is reported skipped.
+- **`load:probe`** — `bin/mahout-devtools load:probe --url=… [--concurrency=8]
+  [--requests=80]` issues a fixed concurrency through `curl_multi` and reports p50,
+  p95, p99 and requests per second. Only a request that does not return a 2xx or 3xx
+  sets an exit code: a slower machine is not a broken theme, and a smoke job that
+  fails for the wrong reason gets deleted. Besides the toolchain's own assembly it asserts the
+  declared capacity prerequisites, measuring rather than reciting: the PHP files
+  this installation can put on a request path against
+  `opcache.max_accelerated_files`, the buffer pool against the site's own table
+  statistics, the installed classmap in a child process, and `preload.php` as far as
+  the platform allows. A prerequisite wrong in every mode fails; one that is right on
+  a development box and wrong in production warns with its remedy; one that cannot
+  apply to this root is reported skipped.
+- **`load:probe`** — `bin/mahout-devtools load:probe --url=… [--concurrency=8]
+  [--requests=80]` issues a fixed concurrency through `curl_multi` and reports p50,
+  p95, p99 and requests per second. Only a request that does not return a 2xx or 3xx
+  sets an exit code: a slower machine is not a broken theme, and a smoke job that
+  fails for the wrong reason gets deleted.
 
 ### Consuming the analyzer configuration
 
