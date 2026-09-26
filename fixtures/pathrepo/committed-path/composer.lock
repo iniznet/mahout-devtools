@@ -1,0 +1,12 @@
+{
+    "packages": [
+        {
+            "name": "iniznet/mahout-kernel",
+            "version": "dev-main",
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/iniznet/mahout-kernel/zipball/abc"
+            }
+        }
+    ]
+}

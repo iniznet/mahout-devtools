@@ -1,0 +1,9 @@
+{
+    "name": "iniznet/demo",
+    "repositories": {
+        "kernel": {
+            "type": "path",
+            "url": "../mahout-kernel"
+        }
+    }
+}

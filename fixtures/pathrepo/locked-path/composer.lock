@@ -1,0 +1,13 @@
+{
+    "packages": [
+        {
+            "name": "iniznet/mahout-kernel",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../mahout-kernel",
+                "reference": "x"
+            }
+        }
+    ]
+}
