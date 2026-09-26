@@ -14,6 +14,10 @@ use PHPStan\Rules\RuleError;
  * class binds the consumer to an implementation detail that may change in a
  * patch release.
  *
+ * The package is the vendor segment after `Iniznet\`, so a package of the family
+ * (`Iniznet\Mahout\Db\…` is `Db`) and a host installation (`Iniznet\Howdah\…` is
+ * `Howdah`, `Iniznet\Kumki\…` is `Kumki`) are the same kind of thing to this rule.
+ *
  * @implements ArchitectureRule<Node>
  */
 final class InternalNotCrossPackageRule implements ArchitectureRule
@@ -52,12 +56,12 @@ final class InternalNotCrossPackageRule implements ArchitectureRule
 
     private function packageOf(string $fqcn): ?string
     {
-        if (1 === preg_match('/^Iniznet\\\\Mahout\\\\([^\\\\]+)\\\\/', $fqcn, $matches)) {
-            return $matches[1];
-        }
-
-        if (str_starts_with($fqcn, 'Iniznet\\Howdah\\')) {
-            return 'Howdah';
+        // One pattern for both kinds of package: `Iniznet\Mahout\Db\…` is the package
+        // `Db`, and a host installation — `Iniznet\Howdah\…`, `Iniznet\Kumki\…` — is the
+        // package named after it. Naming only one host would leave every other
+        // installation outside the rule's reach, and the reach is the point.
+        if (1 === preg_match('/^Iniznet\\\\([^\\\\]+)\\\\([^\\\\]+)\\\\/', $fqcn, $matches)) {
+            return 'Mahout' === $matches[1] ? $matches[2] : $matches[1];
         }
 
         return null;

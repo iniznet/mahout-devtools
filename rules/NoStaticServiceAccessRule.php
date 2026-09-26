@@ -21,12 +21,6 @@ final class NoStaticServiceAccessRule implements ArchitectureRule
 {
     public const IDENTIFIER = 'mahout.arch.noStaticServiceAccess';
 
-    /** @var list<string> */
-    private const COMPOSITION_ROOT = [
-        'Iniznet\\Howdah\\Bootstrap',
-        'Iniznet\\Howdah\\Support\\Request',
-        'Iniznet\\Howdah\\Render\\Surfaces',
-    ];
 
     public function getNodeType(): string
     {
@@ -41,10 +35,12 @@ final class NoStaticServiceAccessRule implements ArchitectureRule
         }
 
         $className = $scope->resolveName($node->class);
-        if (in_array($className, self::COMPOSITION_ROOT, true)) {
-            return [];
-        }
 
+        // No exemption list is needed, and none is kept: the composition root's own
+        // classes — `\Bootstrap`, `<Host>\Support\Request`, `\Render\Surfaces` — are
+        // not services by the test below, so they were never in this rule's reach. A
+        // list naming one host's classes would have implied the exemption is a privilege
+        // of that host rather than a fact about what resolves a collaborator.
         if (!$this->isService($className)) {
             return [];
         }

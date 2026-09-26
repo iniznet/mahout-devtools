@@ -22,7 +22,13 @@ final class SuperglobalsOnlyInRequestRule implements ArchitectureRule
     /** @var list<string> */
     private const SUPERGLOBALS = ['_GET', '_POST', '_REQUEST', '_SERVER', '_FILES', '_COOKIE'];
 
-    private const REQUEST = 'Iniznet\\Howdah\\Support\\Request';
+    /**
+     * The request boundary is named by its position in a host, not by one host's
+     * fully qualified name: `<Host>\Support\Request`. A fixed FQCN would be a rule
+     * that quietly stops applying at the second installation, which is worse than no
+     * rule, because the reader cannot tell which side of the boundary they are on.
+     */
+    private const REQUEST_SUFFIX = '\\Support\\Request';
 
     public function getNodeType(): string
     {
@@ -36,14 +42,14 @@ final class SuperglobalsOnlyInRequestRule implements ArchitectureRule
             return [];
         }
 
-        if ($scope->isInClass() && 0 === strcmp($scope->getClassReflection()->getName(), self::REQUEST)) {
+        if ($scope->isInClass() && str_ends_with($scope->getClassReflection()->getName(), self::REQUEST_SUFFIX)) {
             return [];
         }
 
         return [Violation::at(
             $node,
             self::IDENTIFIER,
-            sprintf('$%s is read only inside %s; consume the request adapter.', $node->name, self::REQUEST),
+            sprintf('$%s is read only inside the boundary a host names <Host>\\Support\\Request; consume the request adapter.', $node->name),
         )];
     }
 }
