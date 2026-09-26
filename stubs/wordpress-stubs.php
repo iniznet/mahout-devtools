@@ -4575,6 +4575,21 @@ function _wp_image_meta_replace_original($saved_data, $original_file, $image_met
 }
 
 /**
+ * Determines whether a template found by locate_template() may be loaded.
+ *
+ * @since 7.1.2
+ * @access private
+ *
+ * @global string $wp_stylesheet_path Path to current theme's stylesheet directory.
+ * @global string $wp_template_path   Path to current theme's template directory.
+ *
+ * @param string $path Path to an existing template file.
+ * @return bool Whether the template may be loaded.
+ */
+function _wp_is_template_path_allowed($path) {
+}
+
+/**
  * Fallback mechanism for safely validating UTF-8 bytes.
  *
  * @since 6.9.0
@@ -25117,6 +25132,7 @@ function locate_block_template($template, $type, array $templates) {
  *
  * @since 2.7.0
  * @since 5.5.0 The `$args` parameter was added.
+ * @since 7.1.2 A template name containing `..` is only located if it resolves inside the theme.
  *
  * @global string $wp_stylesheet_path Path to current theme's stylesheet directory.
  * @global string $wp_template_path   Path to current theme's template directory.
