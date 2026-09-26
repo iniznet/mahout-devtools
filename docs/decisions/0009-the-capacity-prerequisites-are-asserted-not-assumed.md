@@ -72,14 +72,29 @@ absolute latency is reported and never asserted.
 
 ## Consequences
 
-The dev-loop gate stays green on a development box, and the production report now
-carries the four facts the capacity model depends on. Two measurements replace what
-were assumptions: the file floor, which is thin on the reference box and will be
-reported by `doctor` the moment it is exceeded, and the first real latency numbers,
-which say that this request costs about 106 ms on the development install against
-the model's 8.8 ms — twelve times the figure the arithmetic rests on, on a machine
-with no page cache, no object cache, timestamp validation on, and the thread-safe
-PHP build. That gap is the reason the probe exists; closing it is a production-shaped
-measurement, not a code change. Because mysqli's report mode differs between a
-WordPress bootstrap and a bare CLI, the unreachable-database path handles both the
-exception and the connect error rather than betting on one.
+The dev-loop gate stays green on a development box, and the report now carries the
+four facts the capacity model depends on.
+
+One of the two numbers this change produced replaces an assumption: the file floor is
+a count of files on disk, it does not care which SAPI counted them, and at 9,777
+against a declared 10,000 it is thin in a way nobody had looked at. `doctor` will
+report the moment it is exceeded.
+
+The other number does not replace anything, and saying so is part of the record. The
+first probe runs measured about 106 ms at concurrency one on the local installation.
+That is not a measurement of the model's 8.8 ms per request and it must not be read
+as twelve times anything: the local stack is nginx talking to `php-cgi` on a
+thread-safe Windows build, so the figure contains the per-request process cost that a
+resident pool worker never pays, on a machine with timestamp validation on, no object
+cache and no page cache. It measures the rig, not the theme.
+
+A2 therefore remains an assumption until the probe runs against a Linux pool with the
+prerequisites asserted — the same condition under which `PreloadFileCheck` can exercise
+pool start at all, since `opcache.preload` does not exist on Windows, and under which
+`--classmap-authoritative` is an install shape rather than a local override. This
+workstation is a Windows host under Laragon with no container runtime and no
+subsystem, so neither condition is reachable here: the production-shaped measurement
+comes from a Linux runner or the real host, and nothing measured on this box belongs
+in the model's arithmetic. Because mysqli's report mode differs between a WordPress
+bootstrap and a bare CLI, the unreachable-database path handles both the exception and
+the connect error rather than betting on one.
