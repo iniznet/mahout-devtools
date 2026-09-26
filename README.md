@@ -98,7 +98,10 @@ consequence of its lockfile. The package has four responsibilities:
 - **Divergence** — `composer config:check` proves that this repository
   references the analyzer configuration and architecture rules shipped here
   rather than copying them, that the package is pinned in `composer.lock`,
-  and that the artifact set is present. Run from the repository root.
+  that the artifact set is present, and that its gate scripts match
+  `resources/gates.json` — the family's gate set, so a dropped or redefined
+  gate fails the build instead of surfacing in an audit. Run from the
+  repository root.
 - **`doctor`** — `bin/mahout-devtools doctor` runs the installation checks and
   exits non-zero on a failure.
 

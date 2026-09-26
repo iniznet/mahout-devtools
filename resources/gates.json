@@ -1,0 +1,32 @@
+{
+    "scripts": {
+        "format": "php-cs-fixer fix",
+        "format:check": "php-cs-fixer fix --dry-run --diff",
+        "stan": "phpstan analyse -c phpstan.neon --no-progress --memory-limit=2G",
+        "psalm": "psalm --taint-analysis --no-cache",
+        "arch": "phpstan analyse -c phpstan.neon --no-progress --memory-limit=2G",
+        "rector": "rector --dry-run --no-progress-bar",
+        "test": "php vendor/bin/phpunit -c phpunit.xml.dist",
+        "hooks:check": "php vendor/bin/mahout-devtools hooks:check --source={source} --output=docs/reference/hooks.md",
+        "hooks:generate": "php vendor/bin/mahout-devtools hooks:generate --source={source} --output=docs/reference/hooks.md",
+        "i18n:check": "php vendor/bin/mahout-devtools i18n:check --domain={domain} --source={source} --output=languages/{domain}.pot",
+        "i18n:generate": "php vendor/bin/mahout-devtools i18n:generate --domain={domain} --source={source} --output=languages/{domain}.pot",
+        "doctor": "php vendor/bin/mahout-devtools doctor",
+        "config:check": "php vendor/bin/mahout-devtools config:check"
+    },
+    "check": [
+        "@format:check",
+        "@stan",
+        "@psalm",
+        "@rector",
+        "@test",
+        "@hooks:check",
+        "@i18n:check",
+        "@doctor",
+        "@config:check"
+    ],
+    "optional": [
+        "accept",
+        "budget:check"
+    ]
+}

@@ -201,7 +201,15 @@ never load the code they inspect. Fixtures under `fixtures/i18n/` and
 `composer config:check` is the divergence gate. In a consumer it proves that
 the four analyzer files reference the pinned `iniznet/mahout-devtools`
 configuration, that `composer.lock` pins the package, that no local
-architecture-rule copy exists, and that the artifact set is present. In this
-producer repository it instead proves every shipped rule file is registered in
-`phpstan.neon`. The fixture consumers under `fixtures/divergence/` hold the
+architecture-rule copy exists, that the artifact set is present, and that the
+repository's gate scripts are the family's. In this producer repository it
+instead proves every shipped rule file is registered in `phpstan.neon`. The
+fixture consumers under `fixtures/divergence/` and `fixtures/gates/` hold the
 passing and failing cases.
+
+The gate set lives in `resources/gates.json`: every canonical command with two
+placeholders resolved from the repository under examination — `{domain}` from
+its package name, `{source}` from the first path its `phpstan.neon` analyses.
+A repository may add scripts of its own; it may not drop, edit or reorder a
+canonical gate, and its `check` event may not run a step the manifest does not
+declare. See ADR-0007.

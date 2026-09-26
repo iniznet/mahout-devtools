@@ -1,0 +1,29 @@
+{
+    "name": "iniznet/mahout-fixture",
+    "scripts": {
+        "format": "php-cs-fixer fix",
+        "format:check": "php-cs-fixer fix --dry-run --diff",
+        "stan": "phpstan analyse -c phpstan.neon --no-progress --memory-limit=2G",
+        "psalm": "psalm --taint-analysis --no-cache",
+        "arch": "phpstan analyse -c phpstan.neon --no-progress --memory-limit=2G",
+        "rector": "rector --dry-run --no-progress-bar",
+        "test": "php vendor/bin/phpunit -c phpunit.xml.dist",
+        "hooks:check": "php vendor/bin/mahout-devtools hooks:check --source=app --output=docs/reference/hooks.md",
+        "hooks:generate": "php vendor/bin/mahout-devtools hooks:generate --source=app --output=docs/reference/hooks.md",
+        "i18n:check": "php vendor/bin/mahout-devtools i18n:check --domain=mahout-fixture --source=app --output=languages/mahout-fixture.pot",
+        "i18n:generate": "php vendor/bin/mahout-devtools i18n:generate --domain=mahout-fixture --source=app --output=languages/mahout-fixture.pot",
+        "doctor": "php vendor/bin/mahout-devtools doctor",
+        "config:check": "php vendor/bin/mahout-devtools config:check",
+        "check": [
+            "@format:check",
+            "@stan",
+            "@psalm",
+            "@rector",
+            "@test",
+            "@hooks:check",
+            "@i18n:check",
+            "@doctor",
+            "@config:check"
+        ]
+    }
+}

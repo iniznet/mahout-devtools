@@ -7,6 +7,7 @@ namespace Iniznet\Mahout\Devtools\Console;
 use Iniznet\Mahout\Devtools\Doctor\Checks\AnalyzerDivergenceCheck;
 use Iniznet\Mahout\Devtools\Doctor\Checks\ArchitectureRuleCatalogCheck;
 use Iniznet\Mahout\Devtools\Doctor\Checks\AutoloaderCheck;
+use Iniznet\Mahout\Devtools\Doctor\Checks\GatesManifestCheck;
 use Iniznet\Mahout\Devtools\Doctor\Checks\PathRepositoryCheck;
 use Iniznet\Mahout\Devtools\Doctor\Checks\PhpExtensionCheck;
 use Iniznet\Mahout\Devtools\Doctor\Checks\PhpVersionCheck;
@@ -138,6 +139,7 @@ final readonly class Application
             $checks[] = new ArchitectureRuleCatalogCheck($root);
         } else {
             $checks[] = new AnalyzerDivergenceCheck($root);
+            $checks[] = new GatesManifestCheck($root, $this->paths->root.'/resources/gates.json');
         }
 
         return $this->report(new Doctor($checks)->examine());
