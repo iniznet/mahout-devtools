@@ -25,20 +25,43 @@
  * `opcache.max_accelerated_files` is a hash-table size, and a table too small
  * for the installation evicts under traffic — which presents as "the theme is
  * slow" while the theme is innocent. The floor is counted from this installation
- * rather than guessed at.
+ * rather than guessed at, and it is counted over the code this installation can
+ * put on a request path: core, must-use plugins, the active theme and the active
+ * plugins. A workstation with three starter checkouts side by side is not an
+ * installation that can load all three, and a floor that said it were would fail
+ * the gate for a fact about the developer's disk rather than about the site —
+ * which is how a gate stops being read.
+ *
+ * Reading the active set costs one options query, and it is the same query the
+ * composition-root check already makes; where the database is unreachable the
+ * census falls back to every host directory it can see and says so in the line,
+ * because a pessimistic number is a worse floor to be told than an absent one
+ * but it must never be mistaken for the exact reading.
  */
 
 declare(strict_types=1);
 
 namespace Iniznet\Mahout\Devtools\Doctor\Checks;
 
+use Iniznet\Mahout\Devtools\Console\DatabaseCredentials;
 use Iniznet\Mahout\Devtools\Contracts\Check;
+use Iniznet\Mahout\Devtools\Doctor\ActiveHosts;
 use Iniznet\Mahout\Devtools\Doctor\CheckResult;
 
 final readonly class OpcacheCheck implements Check
 {
-    /** The trees a front-end request can load code from. */
-    private const array FLOOR_DIRECTORIES = ['wp-includes', 'wp-admin', 'wp-content/plugins', 'wp-content/themes'];
+    /**
+     * Code a request can reach whatever the site has activated: core, and everything
+     * in the must-use directory, which has no option recording it because there is
+     * nothing to record.
+     */
+    private const array CORE_DIRECTORIES = ['wp-includes', 'wp-admin', 'wp-content/mu-plugins'];
+
+    /**
+     * The host trees counted whole when the active set cannot be read. A guess that
+     * over-counts is the safe direction for a floor; the line says which reading ran.
+     */
+    private const array HOST_DIRECTORIES = ['wp-content/plugins', 'wp-content/themes'];
 
     /** The pool a production install is declared to need; below it the cache thrashes. */
     private const int MINIMUM_MEMORY_MB = 256;
@@ -52,6 +75,7 @@ final readonly class OpcacheCheck implements Check
         private array $settings,
         private bool $extensionLoaded,
         private ?string $environmentType = null,
+        private ?ActiveHosts $hosts = null,
     ) {
     }
 
@@ -117,18 +141,24 @@ final readonly class OpcacheCheck implements Check
         }
 
         $declared = (int) ($this->settings['opcache.max_accelerated_files'] ?? 0);
-        $floor = $this->fileFloor();
+        [$floor, $bounded] = $this->fileFloor();
 
         if (null === $floor) {
             $notes[] = 'max_accelerated_files '.$declared.' (no WordPress installation at this root, so the floor is not measurable here)';
         } elseif ($declared < $floor) {
             $problems[] = sprintf(
-                'opcache.max_accelerated_files is %d but this installation can load %d PHP files: the table evicts under traffic',
+                'opcache.max_accelerated_files is %d but this installation can load %d PHP files%s: the table evicts under traffic',
                 $declared,
                 $floor,
+                $bounded ? ' (the active host is unknown, so every theme and plugin on disk was counted)' : ' across core, must-use code and the active host',
             );
         } else {
-            $notes[] = sprintf('max_accelerated_files %d >= %d measured file floor', $declared, $floor);
+            $notes[] = sprintf(
+                'max_accelerated_files %d >= %d measured file floor%s',
+                $declared,
+                $floor,
+                $bounded ? ' (pessimistic: the active host is unknown, so every theme and plugin on disk was counted)' : ' (active host only)',
+            );
         }
 
         if ([] !== $problems) {
@@ -150,18 +180,22 @@ final readonly class OpcacheCheck implements Check
     }
 
     /**
-     * The count of PHP files the installation can put on disk for a request to
-     * load. `null` when there is no installation here to count.
+     * The count of PHP files the installation can put on a request path, and whether
+     * that number is the bounded reading or the fallback that counts every host on
+     * disk. `null` when there is no installation here to count.
+     *
+     * @return array{int|null, bool}
      */
-    private function fileFloor(): ?int
+    private function fileFloor(): array
     {
         if ('' === $this->wordpressRoot || !is_dir($this->wordpressRoot)) {
-            return null;
+            return [null, false];
         }
 
+        [$directories, $bounded] = $this->loadedTrees();
         $count = 0;
 
-        foreach (self::FLOOR_DIRECTORIES as $relative) {
+        foreach ($directories as $relative) {
             $directory = $this->wordpressRoot.'/'.$relative;
 
             if (!is_dir($directory)) {
@@ -177,10 +211,78 @@ final readonly class OpcacheCheck implements Check
                     }
                 }
             } catch (\UnexpectedValueException) {
-                return null;
+                return [null, $bounded];
             }
         }
 
-        return $count > 0 ? $count : null;
+        return [$count > 0 ? $count : null, $bounded];
+    }
+
+    /**
+     * The trees a request can load code from: core and must-use always, and the hosts
+     * the site reports as activated. When the options table gives no answer, every
+     * host directory is counted and the caller is told the reading was the pessimistic
+     * one rather than left to assume it was the exact one.
+     *
+     * @return array{list<string>, bool}
+     */
+    private function loadedTrees(): array
+    {
+        $hosts = $this->hosts ?? $this->readActiveHosts();
+
+        if (null === $hosts) {
+            return [[...self::CORE_DIRECTORIES, ...self::HOST_DIRECTORIES], true];
+        }
+
+        $directories = self::CORE_DIRECTORIES;
+
+        if (null !== $hosts->stylesheet) {
+            $directories[] = 'wp-content/themes/'.$hosts->stylesheet;
+        }
+
+        foreach ($hosts->plugins as $plugin) {
+            $directories[] = 'wp-content/plugins/'.$plugin;
+        }
+
+        return [$directories, false];
+    }
+
+    /**
+     * The site's own answer, or null when the options table gives none.
+     *
+     * A failed connect raises a diagnostic or an exception depending on the mysqli
+     * report mode in force, exactly as in the composition-root check, so both paths
+     * end in the same reported answer.
+     */
+    private function readActiveHosts(): ?ActiveHosts
+    {
+        $config = $this->wordpressRoot.'/wp-config.php';
+
+        if (!is_file($config)) {
+            return null;
+        }
+
+        $credentials = DatabaseCredentials::fromConfigFile($config);
+
+        if (null === $credentials || null === $credentials->tablePrefix) {
+            return null;
+        }
+
+        try {
+            $connection = @new \mysqli($credentials->host, $credentials->user, $credentials->password, $credentials->name, $credentials->port);
+        } catch (\mysqli_sql_exception) {
+            return null;
+        }
+
+        if (0 !== $connection->connect_errno) {
+            $connection->close();
+
+            return null;
+        }
+
+        $active = ActiveHosts::fromConnection($connection, $credentials->tablePrefix);
+        $connection->close();
+
+        return $active;
     }
 }
