@@ -6,6 +6,8 @@ namespace Iniznet\Mahout\Devtools\Rules;
 
 use PhpParser\Node;
 use PhpParser\Node\Arg;
+use PhpParser\Node\Expr;
+use PhpParser\Node\Expr\BinaryOp\Concat;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
@@ -54,14 +56,47 @@ final class NoRawHookNameRule implements ArchitectureRule
         }
 
         $argument = $node->args[0]->value;
-        if (!$argument instanceof String_) {
+
+        if (!$argument instanceof String_ && !$argument instanceof Concat) {
+            return [];
+        }
+
+        $head = self::rawHead($argument);
+
+        if (null === $head) {
             return [];
         }
 
         return [Violation::at(
             $node,
             self::IDENTIFIER,
-            sprintf("Raw hook name '%s' at %s() is banned; declare it on a Hooks class.", $argument->value, $function),
+            $argument instanceof Concat
+                ? sprintf("Raw hook prefix '%s' composes a name at %s(); declare the prefix on a Hooks class so the reference can list it.", $head, $function)
+                : sprintf("Raw hook name '%s' at %s() is banned; declare it on a Hooks class.", $head, $function),
         )];
+    }
+
+    /**
+     * The raw string at the head of a hook name, through a concatenation.
+     *
+     * The left operand is where a composed prefix sits, and `'load-' . $hook` is the
+     * same bypass as `'load-'` — it is the case this rule exists for and did not see,
+     * found while auditing the family's hook documentation rather than by a failure.
+     *
+     * A prefix that arrives from a declared constant is not a bypass: the fragment is
+     * still in the inventory the reference is generated from, so only a literal head
+     * is reported.
+     */
+    private static function rawHead(Expr $expression): ?string
+    {
+        if ($expression instanceof String_) {
+            return $expression->value;
+        }
+
+        if ($expression instanceof Concat) {
+            return self::rawHead($expression->left);
+        }
+
+        return null;
     }
 }
