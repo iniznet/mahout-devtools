@@ -5,16 +5,51 @@
  * mahout-devtools entry point.
  *
  * This file is a boundary, not analysed source: it reads the process argument
- * vector and composes the application. When installed as a dependency, composer
- * has already loaded the autoloader before including this file.
+ * vector and composes the application.
+ *
+ * Autoloader discovery is the whole job of the head, and getting it wrong is
+ * invisible in development. Composer's generated proxy in vendor/bin only
+ * includes this file -- it loads no autoloader -- so the assumption that the
+ * consumer's autoloader is already loaded is false for a CLI. It appeared true
+ * for as long as the packages were symlinked path repositories, because __DIR__
+ * then resolved into this package's own tree and found its development vendor.
+ * Installed as a real dist -- which is every actual consumer -- that path does
+ * not exist, and the failure was an uncaught "Class ... Application not found".
+ *
+ * Order is deliberate. The consuming project comes first: a dependency must not
+ * serve its host from its own private autoloader, which is the one-autoloader
+ * hazard the contract already refuses. The working directory second covers
+ * "php vendor/iniznet/.../bin/mahout-devtools" from the host root. This
+ * package's own vendor last, which is how the tool runs inside its repository.
+ * Nothing is required silently; if no autoloader is found the tool says so and
+ * exits, because a gate that cannot start must not pretend to have passed.
  */
 
 declare(strict_types=1);
 
-$autoload = __DIR__ . '/../vendor/autoload.php';
-if (is_file($autoload)) {
-	require $autoload;
+$candidates = [
+	__DIR__ . '/../../../autoload.php',
+	getcwd() . '/vendor/autoload.php',
+	__DIR__ . '/../vendor/autoload.php',
+];
+
+$loaded = null;
+
+foreach ($candidates as $candidate) {
+	if (is_file($candidate)) {
+		$loaded = $candidate;
+
+		break;
+	}
 }
+
+if (null === $loaded) {
+	fwrite(STDERR, 'mahout-devtools could not find an autoloader; run it from a project that requires the package' . PHP_EOL);
+
+	exit(1);
+}
+
+require $loaded;
 
 $application = new Iniznet\Mahout\Devtools\Console\Application(
 	Iniznet\Mahout\Devtools\Console\Paths::fromEnvironment(),
