@@ -19,6 +19,7 @@ namespace Iniznet\Mahout\Devtools\Doctor\Checks;
 use Iniznet\Mahout\Devtools\Console\ProcessRunner;
 use Iniznet\Mahout\Devtools\Contracts\Check;
 use Iniznet\Mahout\Devtools\Doctor\CheckResult;
+use Iniznet\Mahout\Devtools\Doctor\DeployableRoot;
 
 final readonly class PreloadFileCheck implements Check
 {
@@ -42,7 +43,7 @@ final readonly class PreloadFileCheck implements Check
     public function examine(): CheckResult
     {
         if (!$this->isDeployable()) {
-            return CheckResult::skip($this->name(), 'not a deployable theme root; a library ships no preload set');
+            return CheckResult::skip($this->name(), 'not a deployable host root; a library ships no preload set');
         }
 
         $file = $this->root.'/'.self::FILENAME;
@@ -100,14 +101,6 @@ final readonly class PreloadFileCheck implements Check
 
     private function isDeployable(): bool
     {
-        $manifest = $this->root.'/composer.json';
-
-        if (!is_file($manifest)) {
-            return false;
-        }
-
-        $decoded = json_decode((string) file_get_contents($manifest), true);
-
-        return \is_array($decoded) && 'wordpress-theme' === ($decoded['type'] ?? null);
+        return DeployableRoot::isRoot($this->root);
     }
 }

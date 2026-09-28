@@ -199,7 +199,12 @@ final readonly class Application
             // the wrong tree, and disagreed with `config:check`, which already used the invoked
             // root. A diagnostic that answers a question about itself while appearing to answer
             // about the site is worse than no diagnostic, because both gates look like evidence.
-            new RequiredFilesCheck($root, 'Stub file', ['stubs/wordpress-stubs.php']),
+            // The shared stub file is the producer's own artifact: a deployable host references it
+            // through vendor/iniznet/mahout-devtools/stubs and keeps no copy of its own, which is
+            // the same rule config:check already applies with its 'Shared stubs' producer branch.
+            ...($this->isProducer($root)
+                ? [new RequiredFilesCheck($root, 'Stub file', ['stubs/wordpress-stubs.php'])]
+                : []),
             new RequiredFilesCheck($root, 'Analyzer configuration', self::ANALYZER_FILES),
             new RequiredFilesCheck($root, 'Artifact set', self::ARTIFACTS),
             new RequiredFilesCheck($root, 'Test bootstrap', ['tests/bootstrap.php']),

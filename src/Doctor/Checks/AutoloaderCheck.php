@@ -27,6 +27,7 @@ use Iniznet\Mahout\Devtools\Console\ProcessRunner;
 use Iniznet\Mahout\Devtools\Contracts\Check;
 use Iniznet\Mahout\Devtools\Doctor\CheckResult;
 use Iniznet\Mahout\Devtools\Doctor\DeclaredClasses;
+use Iniznet\Mahout\Devtools\Doctor\DeployableRoot;
 
 final readonly class AutoloaderCheck implements Check
 {
@@ -55,9 +56,7 @@ final readonly class AutoloaderCheck implements Check
             return CheckResult::fail($this->name(), 'composer.json is missing or unreadable beside the installed autoloader');
         }
 
-        $type = $manifest['type'] ?? null;
-
-        if (!\is_string($type) || !\in_array($type, ['wordpress-theme', 'wordpress-plugin'], true)) {
+        if (!DeployableRoot::matches($manifest)) {
             return CheckResult::pass($this->name(), 'vendor/autoload.php present; a library map is the consumer\'s shape');
         }
 
