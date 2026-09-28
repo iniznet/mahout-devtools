@@ -192,12 +192,19 @@ final readonly class Application
             new CompositionRootCheck($this->paths->wordpressRoot),
             new AutoloaderCheck($root, $this->runner),
             new PreloadFileCheck($root, $this->runner, (string) ini_get('opcache.preload')),
-            new RequiredFilesCheck($this->paths->root, 'Stub file', ['stubs/wordpress-stubs.php']),
-            new RequiredFilesCheck($this->paths->root, 'Analyzer configuration', self::ANALYZER_FILES),
-            new RequiredFilesCheck($this->paths->root, 'Artifact set', self::ARTIFACTS),
-            new RequiredFilesCheck($this->paths->root, 'Test bootstrap', ['tests/bootstrap.php']),
-            new PathRepositoryCheck($this->paths->root),
-            new WorkflowSafetyCheck($this->paths->root),
+            // The subject of every one of these is the project that invoked the tool, not the
+            // directory this package was installed into. Reaching for the package root here made
+            // `doctor` audit the tool's own vendor copy when the tool ran as a dependency: it then
+            // reported a consumer's artifact set and path repositories as missing or clean about
+            // the wrong tree, and disagreed with `config:check`, which already used the invoked
+            // root. A diagnostic that answers a question about itself while appearing to answer
+            // about the site is worse than no diagnostic, because both gates look like evidence.
+            new RequiredFilesCheck($root, 'Stub file', ['stubs/wordpress-stubs.php']),
+            new RequiredFilesCheck($root, 'Analyzer configuration', self::ANALYZER_FILES),
+            new RequiredFilesCheck($root, 'Artifact set', self::ARTIFACTS),
+            new RequiredFilesCheck($root, 'Test bootstrap', ['tests/bootstrap.php']),
+            new PathRepositoryCheck($root),
+            new WorkflowSafetyCheck($root),
         ];
 
         return $this->report(new Doctor($checks)->examine());
