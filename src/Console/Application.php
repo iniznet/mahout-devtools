@@ -24,7 +24,9 @@ use Iniznet\Mahout\Devtools\Exception\DevtoolsException;
 use Iniznet\Mahout\Devtools\Exception\InvalidInvocation;
 use Iniznet\Mahout\Devtools\Exception\StubGenerationFailed;
 use Iniznet\Mahout\Devtools\Generator\GeneratedReference;
+use Iniznet\Mahout\Devtools\Generator\Hooks\HookDocument;
 use Iniznet\Mahout\Devtools\Generator\Hooks\HooksReference;
+use Iniznet\Mahout\Devtools\Generator\Hooks\HookType;
 use Iniznet\Mahout\Devtools\Generator\ReferenceGate;
 use Iniznet\Mahout\Devtools\Generator\SourceFiles;
 use Iniznet\Mahout\Devtools\Generator\Translations\TranslationsReference;
@@ -366,13 +368,26 @@ final readonly class Application
     }
 
     /**
+     * The two hook documents. Both are gated on every run, so a package that declares only
+     * actions still has its empty filters file checked, and a deleted file fails rather than
+     * going unnoticed.
+     *
      * @param array<string, string> $options
      */
     private function hookGate(array $options, bool $write): int
     {
-        $reference = new HooksReference(new SourceFiles($this->sourceRoots($options), $this->cwd()));
+        $directory = rtrim($this->requiredOption($options, 'outdir'), '/\\');
+        $definitions = new HooksReference(new SourceFiles($this->sourceRoots($options), $this->cwd()))->definitions();
 
-        return $this->referenceGate($reference, $this->requiredOption($options, 'output'), $write);
+        foreach (HookType::cases() as $type) {
+            $status = $this->referenceGate(new HookDocument($type, $definitions), $directory.'/'.$type->fileName(), $write);
+
+            if (0 !== $status) {
+                return $status;
+            }
+        }
+
+        return 0;
     }
 
     private function referenceGate(GeneratedReference $reference, string $output, bool $write): int

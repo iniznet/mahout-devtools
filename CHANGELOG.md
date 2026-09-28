@@ -34,6 +34,30 @@ A major entry names each removal.
   `mahout-devtools`, and carries no local copy. Proven against the fixture
   consumers under `fixtures/divergence/`, including the failing cases.
 
+### Changed
+
+- `hooks:check` and `hooks:generate` write two documents, split by hook kind:
+  `<outdir>/actions.md` and `<outdir>/filters.md`. A single mixed table asked
+  the reader to filter rows mentally for the question they actually came with
+  — which hooks fire and forget, versus which hooks return a value — and the
+  kind is the distinction the generator already records from the docblock. The
+  scan stays in `HooksReference` and runs once; `HookDocument` renders one kind,
+  and `HookType` owns the file names, the headings and the gate message, so a
+  consumer's composer script names a directory rather than two files.
+- A kind with no hooks still gets a document, and both documents are gated on
+  every run. A gate that only ever compares a file that exists when there is
+  something to say stops running the day a package deletes its last filter.
+
+### Removed
+
+- The `--output` option of `hooks:check` and `hooks:generate`, replaced by
+  `--outdir`. One artefact became two, so a single file path no longer names
+  what the command writes; keeping both spellings would leave a consumer's
+  script pointing at a file that is never produced. Adopting consumers run
+  `hooks:generate --source=<own source> --outdir=docs/reference`, commit
+  `docs/reference/actions.md` and `docs/reference/filters.md`, and delete
+  `docs/reference/hooks.md`. This removal is why the release is 2.0.0.
+
 ### Fixed
 
 - `BoundedHowdahStatementRule` is no longer silent on every real table name.
