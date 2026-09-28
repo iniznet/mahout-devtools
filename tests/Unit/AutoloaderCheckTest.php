@@ -57,6 +57,17 @@ final class AutoloaderCheckTest extends TestCase
         self::assertSame(Status::Pass, $result->status, $result->detail);
     }
 
+    public function testAClassmapThatOmitsClassesInTheTreesItClaimsFails(): void
+    {
+        $result = $this->examine('autoload-stale');
+
+        self::assertSame(Status::Fail, $result->status, $result->detail);
+        self::assertStringContainsString('does not cover 2 declared classes', $result->detail);
+        self::assertStringContainsString('Iniznet\\Mahout\\Fixture\\AddedAfterTheDump', $result->detail, 'a second class in a file the map references');
+        self::assertStringContainsString('Iniznet\\Mahout\\Fixture\\Unreferenced', $result->detail, 'a file with no entry at all is the hazard: a new class in a symlinked package');
+        self::assertStringContainsString('composer dump-autoload -o', $result->detail, 'the failure names the command that fixes it');
+    }
+
     private function examine(string $fixture): \Iniznet\Mahout\Devtools\Doctor\CheckResult
     {
         return (new AutoloaderCheck(\dirname(__DIR__, 2).'/fixtures/doctor/'.$fixture, new ProcessRunner()))->examine();
