@@ -67,5 +67,5 @@
             "@config:check",
             "@stubs:check"
         ]
-    },
+    }
 }
