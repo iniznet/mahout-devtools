@@ -91,10 +91,11 @@ consequence of its lockfile. The package has four responsibilities:
   `languages/<slug>.pot` from the translation calls in the source. The output
   is date-free, so a second run is byte-identical; `composer i18n:generate`
   writes it. Source roots, text domain and output path are options.
-- **Hook reference** — `composer hooks:check` renders and verifies the hook
-  reference from every public constant in a `Hooks` class;
-  `composer hooks:generate` writes it. A constant whose docblock omits
-  `@action` or `@filter` fails the generation rather than guessing.
+- **Hook references** — `composer hooks:check` renders and verifies the two
+  hook documents from every public constant in a `Hooks` class, written under
+  `--outdir` as `actions.md` and `filters.md`; `composer hooks:generate` writes
+  them. A constant whose docblock omits `@action` or `@filter` fails the
+  generation rather than guessing.
 - **Divergence** — `composer config:check` proves that this repository
   references the analyzer configuration and architecture rules shipped here
   rather than copying them, that the package is pinned in `composer.lock`,

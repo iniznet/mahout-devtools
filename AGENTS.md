@@ -136,7 +136,7 @@ composer psalm       # Psalm taint analysis
 composer arch        # architecture rules
 composer rector      # Rector dry-run
 composer test        # PHPUnit
-composer hooks:check # generated hook reference is current
+composer hooks:check # generated action and filter references are current
 composer i18n:check  # generated POT is current
 composer doctor      # installation assembly and the capacity prerequisites
 composer config:check# divergence and the artifact set
@@ -152,9 +152,10 @@ because two hosts silently share the schema-version option, the field tables and
 hook namespace (mahout-kernel ADR-0007).
 
 `composer check` must pass before every commit, with no `--no-verify`. A gate
-that cannot run fails loudly; it never passes silently. The two generated
-references are refreshed with `composer hooks:generate` and
-`composer i18n:generate` when a hook or a translation string changes.
+that cannot run fails loudly; it never passes silently. The generated
+references — `actions.md`, `filters.md` and the POT — are refreshed with
+`composer hooks:generate` and `composer i18n:generate` when a hook or a
+translation string changes.
 
 ## Required tests
 
